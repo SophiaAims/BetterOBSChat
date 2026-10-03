@@ -174,8 +174,23 @@ function iconButton(name, title) {
   return b;
 }
 
+function sourceTag(source) {
+  const name = source.displayName || source.name || 'another channel';
+  if (!source.logo) {
+    const dot = el('span', 'source-avatar pending', (source.name || '?')[0].toUpperCase());
+    dot.title = `From ${name}'s chat`;
+    return dot;
+  }
+  const img = el('img', 'source-avatar');
+  img.src = source.logo;
+  img.alt = name;
+  img.dataset.tip = `From ${name}'s chat`;
+  img.dataset.big = source.logo;
+  return img;
+}
+
 function renderMessage(msg, ch, withTools = false) {
-  const src = msg.origin || ch;
+  const src = msg.source || msg.origin || ch;
   const row = el('div', 'msg');
   row.dataset.id = msg.id;
   if (msg.historical) row.classList.add('historical');
@@ -223,6 +238,10 @@ function renderMessage(msg, ch, withTools = false) {
   else if (msg.rewardId) row.classList.add('redemption');
   else if (msg.first && !msg.historical) row.classList.add('first');
 
+  if (msg.source) {
+    row.classList.add('shared');
+    if (!settings.sharedChat) row.hidden = true;
+  }
   if (msg.deleted) {
     row.classList.add('deleted');
     if (settings.hideDeleted) row.hidden = true;
@@ -249,7 +268,9 @@ function renderMessage(msg, ch, withTools = false) {
     row.prepend(ctx);
   }
 
-  if (withTools && settings.modButtons && src.isMod && auth && msg.kind === 'chat' && msg.login !== src.name && msg.login !== auth.login) {
+  if (msg.source) row.append(sourceTag(msg.source));
+
+  if (withTools && settings.modButtons && (msg.origin || ch).isMod && auth && msg.kind === 'chat' && msg.login !== (msg.origin || ch).name && msg.login !== auth.login) {
     const tools = el('span', 'tools');
     tools.append(iconButton('delete', 'Delete message'), iconButton('timeout', 'Timeout 10 minutes'), iconButton('ban', 'Ban'));
     row.append(tools);
@@ -296,7 +317,7 @@ function renderMessage(msg, ch, withTools = false) {
 const tip = $('#tooltip');
 
 document.addEventListener('mouseover', e => {
-  const img = e.target.closest?.('img.emote, img.badge');
+  const img = e.target.closest?.('img.emote, img.badge, img.source-avatar');
   if (!img?.dataset.tip) return;
   tip.replaceChildren();
   if (img.dataset.big) {
@@ -315,5 +336,5 @@ document.addEventListener('mouseover', e => {
 });
 
 document.addEventListener('mouseout', e => {
-  if (e.target.closest?.('img.emote, img.badge')) tip.hidden = true;
+  if (e.target.closest?.('img.emote, img.badge, img.source-avatar')) tip.hidden = true;
 });

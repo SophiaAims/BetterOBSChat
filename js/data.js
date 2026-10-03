@@ -470,6 +470,8 @@ function isHidden(msg) {
 }
 
 function makeMsg(ch, t, login, text, extra = {}) {
+  const sourceId = t['source-room-id'];
+  const shared = !!sourceId && !!t['room-id'] && sourceId !== t['room-id'];
   return {
     id: t.id || `local-${++localId}`,
     kind: 'chat',
@@ -478,8 +480,9 @@ function makeMsg(ch, t, login, text, extra = {}) {
     userId: t['user-id'],
     name: t['display-name'] || login,
     color: t.color,
-    badges: t.badges || '',
+    badges: (shared ? t['source-badges'] : t.badges) || '',
     emotes: t.emotes || '',
+    source: shared ? sourceChannel(sourceId) : null,
     text,
     time: Number(t['tmi-sent-ts']) || Date.now(),
     first: t['first-msg'] === '1',
@@ -492,6 +495,38 @@ function makeMsg(ch, t, login, text, extra = {}) {
     reply: t['reply-parent-display-name'] ? { name: t['reply-parent-display-name'], body: t['reply-parent-msg-body'] } : null,
     ...extra,
   };
+}
+
+// Channels whose messages show up in ours through Shared Chat, keyed by room id
+const sourceChannels = new Map();
+
+function sourceChannel(id) {
+  let src = sourceChannels.get(id);
+  if (!src) {
+    src = makeChannel('');
+    src.id = id;
+    src.logo = null;
+    sourceChannels.set(id, src);
+    loadSource(src);
+  }
+  return src;
+}
+
+async function loadSource(src) {
+  try {
+    const u = (await getJSON(`https://api.ivr.fi/v2/twitch/user?id=${src.id}`))?.[0];
+    if (u) Object.assign(src, { name: u.login, displayName: u.displayName, logo: u.logo });
+  } catch {}
+  if (!src.name && auth) {
+    try {
+      const u = (await helix('GET', `/users?id=${src.id}`)).data[0];
+      if (u) Object.assign(src, { name: u.login, displayName: u.display_name, logo: u.profile_image_url });
+    } catch {}
+  }
+  if (src.name) await loadChannelData(src);
+  for (const ch of channels.values()) {
+    if (ch.history.some(m => m.source === src)) ch.splits.forEach(s => s.rerender());
+  }
 }
 
 function noticeMsg(text, time) {
