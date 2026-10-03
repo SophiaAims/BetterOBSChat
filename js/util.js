@@ -47,6 +47,7 @@ const defaults = {
   limit: 600,
   pauseOnHover: false,
   modButtons: true,
+  sharedChat: true,
   highlights: [],
   highlightUsers: [],
   ignored: [],
