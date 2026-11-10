@@ -85,6 +85,19 @@ body.alt-rows .messages .msg:nth-child(even) { background-color: rgba(255, 255, 
 .msg.notice { color: var(--muted); font-size: .9em; }
 .msg.shared { box-shadow: inset 3px 0 #6b7080; }
 .source-avatar { width: 1.2em; height: 1.2em; border-radius: 50%; margin-right: 4px; vertical-align: -.25em; }
+.plat { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; margin-right: 4px; border-radius: 3px; vertical-align: -.2em; }
+.plat svg { width: 80%; height: 80%; fill: currentColor; }
+.plat.kick { background: #53fc18; color: #0b0e0f; }
+.plat.twitch { background: #9146ff; color: #fff; }
+.plat.twitch svg path:first-child { fill-rule: evenodd; }
+.kick-badge { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; margin-right: 3px; border-radius: 3px; vertical-align: -.2em; color: #0b0e0f; }
+.kick-badge svg { width: 78%; height: 78%; fill: currentColor; }
+.kick-chip { padding: 0 5px; border-radius: 3px; background: #53fc18; color: #0b0e0f; font-size: 11px; font-weight: 700; line-height: 16px; }
+.kick-chip.connecting { opacity: .45; }
+.kick-chip.failed { background: var(--danger); color: #fff; }
+.kick-row { display: flex; gap: 6px; align-items: center; padding-right: 12px; }
+.kick-row .panel-filter { flex: 1; min-width: 0; }
+.kick-go { padding: 4px 12px; border-radius: 4px; background: var(--accent); color: #fff; }
 .source-avatar.pending { display: inline-grid; place-items: center; background: var(--raised); color: var(--muted); font-size: .7em; font-weight: 700; }
 .msg.mention { background: rgba(91, 124, 250, .15); box-shadow: inset 3px 0 var(--accent); }
 .msg.hl-user { background: rgba(232, 176, 74, .1); box-shadow: inset 3px 0 #e8b04a; }

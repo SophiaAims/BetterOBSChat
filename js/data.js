@@ -11,7 +11,7 @@ function makeChannel(name, special = false) {
     name, special, id: null,
     emotes: new Map(), badges: new Map(), cheermotes: null, rewards: new Map(),
     history: [], chatters: new Map(), colors: new Map(),
-    me: {}, room: {}, isMod: false, live: undefined,
+    me: {}, room: {}, isMod: false, live: undefined, kick: null,
     splits: new Set(),
   };
 }
@@ -425,6 +425,8 @@ function getChannel(name) {
     irc.send('JOIN #' + name);
     loadRecent(ch);
     schedulePoll();
+    const kick = kickSpecFor(name);
+    if (kick) kickAttach(ch, kick);
   }
   return ch;
 }
@@ -433,6 +435,7 @@ function releaseChannel(ch, split) {
   ch.splits.delete(split);
   if (ch.special || ch.splits.size) return;
   irc.send('PART #' + ch.name);
+  kickDetach(ch);
   channels.delete(ch.name);
 }
 
@@ -567,12 +570,13 @@ function apply(list, ev) {
     const msg = list.find(x => x.id === ev.id);
     if (msg) { msg.deleted = true; res.changed.push(msg); }
   } else if (ev.kind === 'clearUser') {
+    const platform = ev.platform || null;
     for (const msg of list) {
-      if (msg.login === ev.user && !msg.deleted) { msg.deleted = true; res.changed.push(msg); }
+      if (msg.login === ev.user && (msg.platform || null) === platform && !msg.deleted) { msg.deleted = true; res.changed.push(msg); }
     }
-    push(noticeMsg(ev.duration ? `${ev.user} was timed out for ${fmtDuration(ev.duration)}.` : `${ev.user} was banned.`, ev.time));
+    push(noticeMsg(ev.note || (ev.duration ? `${ev.user} was timed out for ${fmtDuration(ev.duration)}.` : `${ev.user} was banned.`), ev.time));
   } else if (ev.kind === 'clearAll') {
-    push(noticeMsg('Chat was cleared by a moderator.', ev.time));
+    push(noticeMsg(ev.note || 'Chat was cleared by a moderator.', ev.time));
   }
 
   if (list.length > settings.limit + 200) list.splice(0, list.length - settings.limit);

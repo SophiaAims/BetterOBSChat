@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <header class="topbar">
@@ -63,6 +63,7 @@
     <label class="check"><input type="checkbox" name="pauseOnHover"> Pause chat while the mouse is over it</label>
     <label class="check"><input type="checkbox" name="modButtons"> Show moderation buttons on messages</label>
     <label class="check"><input type="checkbox" name="sharedChat"> Show messages from other channels during Shared Chat</label>
+    <label class="check"><input type="checkbox" name="platformMarks"> Mark whether each message came from Twitch or Kick</label>
 
     <h3>Highlights and filters</h3>
     <label class="field">Highlight words
@@ -77,17 +78,18 @@
     <label class="check"><input type="checkbox" name="flashTitle"> Show unread mentions in the page title</label>
 
     <h3>Use as an OBS dock</h3>
-    <p class="hint">In OBS, open Docks, then Custom Browser Docks, and paste this address. Add &amp;order=top to make chat move top-down in that dock only, &amp;readonly to hide the message box, or &amp;transparent for a see-through background in a browser source.</p>
+    <p class="hint">In OBS, open Docks, then Custom Browser Docks, and paste this address. Add &amp;kick=yourkickname to merge in your Kick chat, &amp;order=top to make chat move top-down in that dock only, &amp;readonly to hide the message box, or &amp;transparent for a see-through background in a browser source.</p>
     <input id="dock-url" readonly>
 
     <div class="actions"><button value="cancel" formnovalidate>Cancel</button><button value="save" class="primary">Save</button></div>
   </form>
 </dialog>
 
-<script src="js/util.js?v=3"></script>
-<script src="js/data.js?v=3"></script>
-<script src="js/render.js?v=3"></script>
-<script src="js/split.js?v=3"></script>
-<script src="js/ui.js?v=3"></script>
+<script src="js/util.js?v=4"></script>
+<script src="js/data.js?v=4"></script>
+<script src="js/kick.js?v=4"></script>
+<script src="js/render.js?v=4"></script>
+<script src="js/split.js?v=4"></script>
+<script src="js/ui.js?v=4"></script>
 </body>
 </html>

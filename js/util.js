@@ -48,6 +48,7 @@ const defaults = {
   pauseOnHover: false,
   modButtons: true,
   sharedChat: true,
+  platformMarks: true,
   highlights: [],
   highlightUsers: [],
   ignored: [],

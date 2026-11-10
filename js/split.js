@@ -30,7 +30,9 @@ class Split {
     const close = el('button', 'icon-btn', '×');
     close.title = 'Close split (Alt+W)';
     close.onclick = () => closeSplit(this);
-    this.head.append(this.liveDot, this.title, this.modes, more, add, close);
+    this.kickChip = el('span', 'kick-chip', 'Kick');
+    this.kickChip.hidden = true;
+    this.head.append(this.liveDot, this.title, this.kickChip, this.modes, more, add, close);
 
     const wrap = el('div', 'log-wrap');
     this.searchBar = el('div', 'search');
@@ -92,7 +94,7 @@ class Split {
       const row = e.target.closest('.msg');
       const msg = row && this.find(row.dataset.id);
       const user = e.target.closest('.user, .mention-tag');
-      if (user?.dataset.login) return openCard(this, user.dataset.login, e, msg?.origin);
+      if (user?.dataset.login) return openCard(this, user.dataset.login, e, msg?.origin, user.dataset.platform);
       if (!msg) return;
       const act = e.target.closest('[data-act]');
       if (act) return this.act(act.dataset.act, msg);
@@ -106,13 +108,13 @@ class Split {
       if (!msg || msg.kind === 'notice') return;
       e.preventDefault();
       const src = msg.origin || this.ch;
-      const canMod = auth && src.isMod && msg.kind === 'chat' && msg.login !== src.name && msg.login !== auth.login;
-      const canReply = !this.input.disabled && (msg.kind === 'chat' || msg.kind === 'whisper');
+      const canMod = auth && !msg.platform && src.isMod && msg.kind === 'chat' && msg.login !== src.name && msg.login !== auth.login;
+      const canReply = !this.input.disabled && !msg.platform && (msg.kind === 'chat' || msg.kind === 'whisper');
       showMenu([
         canReply && { label: 'Reply', fn: () => this.setReply(msg) },
         { label: 'Copy message', fn: () => copyText(msg.text || msg.system || '') },
         msg.login && { label: 'Copy username', fn: () => copyText(msg.login) },
-        msg.login && { label: 'Open user card', fn: () => openCard(this, msg.login, e, msg.origin) },
+        msg.login && { label: 'Open user card', fn: () => openCard(this, msg.login, e, msg.origin, msg.platform) },
         msg.replyParentId && { label: 'View thread', fn: () => openThread(this, msg, e) },
         canMod && '-',
         canMod && { label: 'Delete message', fn: () => this.act('delete', msg) },
@@ -168,6 +170,7 @@ class Split {
     this.ch = null;
     this.setReply(null);
     this.list.replaceChildren();
+    this.kickChip.hidden = true;
     if (!name) { this.showJoin(); return; }
 
     this.ch = getChannel(name);
@@ -212,6 +215,17 @@ class Split {
     this.modes.textContent = bits.join(', ');
     this.liveDot.hidden = !ch?.live;
     this.head.title = ch?.live ? `${ch.live.title}\n${ch.live.game}` : '';
+
+    const k = ch?.kick;
+    this.kickChip.hidden = !k;
+    if (k) {
+      this.kickChip.className = 'kick-chip ' + k.state;
+      this.kickChip.title = {
+        connected: `Showing kick.com/${k.slug} chat here too`,
+        connecting: `Connecting to kick.com/${k.slug} chat…`,
+        failed: `Couldn't connect to kick.com/${k.slug} chat`,
+      }[k.state];
+    }
   }
 
   updateComposer() {
@@ -221,7 +235,7 @@ class Split {
     else if (!this.ch) this.input.placeholder = '';
     else if (this.ch.name === '/mentions') this.input.placeholder = 'Mentions from every channel you have open';
     else if (special) this.input.placeholder = 'Reply to a whisper, or /w name message';
-    else this.input.placeholder = `Send a message to ${this.ch.name}`;
+    else this.input.placeholder = `Send a message to ${this.ch.name}${this.ch.kick ? ' on Twitch' : ''}`;
     this.pickerBtn.disabled = this.input.disabled;
   }
 
@@ -378,6 +392,10 @@ class Split {
     const followers = room['followers-only'] && room['followers-only'] !== '-1';
     showMenu([
       !ch.special && { label: 'Open channel on Twitch', fn: () => window.open(`https://www.twitch.tv/${ch.name}`, '_blank', 'noopener') },
+      ch.kick && { label: 'Open channel on Kick', fn: () => window.open(`https://kick.com/${ch.kick.slug}`, '_blank', 'noopener') },
+      !ch.special && (ch.kick
+        ? { label: `Unlink Kick chat (${ch.kick.slug})`, fn: () => unlinkKick(ch) }
+        : { label: 'Link a Kick chat…', fn: () => promptKick(this, { clientX: r.left, clientY: r.bottom }) }),
       { label: 'Search messages (Ctrl+F)', fn: () => this.openSearch() },
       mod && hasScope('moderator:read:chatters') && { label: 'Viewer list', fn: () => openViewers(this, { clientX: r.left, clientY: r.bottom }) },
       !ch.special && ch.id && { label: 'Reload emotes and badges', fn: () => loadChannelData(ch) },

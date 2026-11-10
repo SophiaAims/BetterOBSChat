@@ -204,12 +204,13 @@ function closePanel() {
   panelLogin = null;
 }
 
-function openCard(split, login, ev, origin) {
+function openCard(split, login, ev, origin, platform) {
   const ch = origin || split.ch;
   if (!ch || !login) return;
   panelLogin = login;
+  const kick = platform === 'kick';
 
-  const msgs = ch.history.filter(m => m.login === login && m.kind !== 'notice');
+  const msgs = ch.history.filter(m => m.login === login && m.kind !== 'notice' && (m.platform === 'kick') === kick);
   const last = msgs.at(-1);
   const name = last?.name || ch.chatters.get(login) || login;
 
@@ -218,11 +219,13 @@ function openCard(split, login, ev, origin) {
   avatar.alt = '';
   const info = el('div', 'card-info');
   const link = el('a', 'card-name', settings.nicknames[login] ? `${settings.nicknames[login]} (${name})` : name);
-  link.href = `https://www.twitch.tv/${login}`;
+  const kickSlug = msgs.findLast(m => m.slug)?.slug || login;
+  link.href = kick ? `https://kick.com/${kickSlug}` : `https://www.twitch.tv/${login}`;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.style.color = userColor(login, last?.color || ch.colors.get(login));
-  const seen = el('div', 'card-meta', msgs.length ? `${msgs.length} message${msgs.length === 1 ? '' : 's'} this session` : 'No messages this session');
+  const where = kick ? ' on Kick' : '';
+  const seen = el('div', 'card-meta', msgs.length ? `${msgs.length} message${msgs.length === 1 ? '' : 's'}${where} this session` : `No messages${where} this session`);
   const created = el('div', 'card-meta');
   const relation = el('div', 'card-meta');
   info.append(link, seen, created, relation);
@@ -248,7 +251,7 @@ function openCard(split, login, ev, origin) {
 
   const usable = !split.input.disabled;
   if (usable && !split.ch.special) button(actions, 'Mention', () => { split.insert(`@${name}`); closePanel(); });
-  if (auth && login !== auth.login) button(actions, 'Whisper', () => { split.input.value = `/w ${login} `; split.input.focus(); closePanel(); });
+  if (auth && !kick && login !== auth.login) button(actions, 'Whisper', () => { split.input.value = `/w ${login} `; split.input.focus(); closePanel(); });
   button(actions, settings.highlightUsers.includes(login) ? 'Unhighlight' : 'Highlight', toggleList('highlightUsers'));
   button(actions, settings.ignored.includes(login) ? 'Unignore' : 'Ignore', toggleList('ignored'));
   const nickBtn = button(actions, 'Nickname', () => {
@@ -270,7 +273,7 @@ function openCard(split, login, ev, origin) {
   button(actions, 'Copy name', () => copyText(login));
 
   const nodes = [head, actions];
-  if (auth && ch.isMod && !ch.special && login !== ch.name && login !== auth.login) {
+  if (auth && !kick && ch.isMod && !ch.special && login !== ch.name && login !== auth.login) {
     const mod = el('div', 'card-actions');
     for (const [label, secs] of [['1m', 60], ['10m', 600], ['1h', 3600], ['1d', 86400], ['1w', 604800]]) {
       button(mod, label, () => split.timeout(login, secs, '', ch));
@@ -287,6 +290,15 @@ function openCard(split, login, ev, origin) {
 
   showPanel(nodes, ev);
   log.scrollTop = log.scrollHeight;
+
+  if (kick) {
+    kickChannelInfo(kickSlug).then(info => {
+      if (panelLogin !== login) return;
+      if (info?.user?.profile_pic) avatar.src = info.user.profile_pic;
+      if (info?.followers_count != null) created.textContent = `${info.followers_count.toLocaleString()} followers on Kick`;
+    });
+    return;
+  }
 
   getJSON(`https://api.ivr.fi/v2/twitch/user?login=${encodeURIComponent(login)}`).then(res => {
     const u = res?.[0];
@@ -432,7 +444,8 @@ function openSettings(note) {
   form.querySelectorAll('output[data-for]').forEach(o => { o.textContent = form.elements[o.dataset.for].value; });
 
   const first = activePage?.splits.find(s => s.ch && !s.ch.special)?.ch.name || 'yourchannel';
-  $('#dock-url').value = `${location.origin}${location.pathname}?channel=${first}`;
+  const kick = kickSpecFor(first);
+  $('#dock-url').value = `${location.origin}${location.pathname}?channel=${first}${kick ? '&kick=' + encodeURIComponent(kick) : ''}`;
   dialog.showModal();
 }
 

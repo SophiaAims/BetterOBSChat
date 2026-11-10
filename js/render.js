@@ -105,6 +105,7 @@ function renderText(msg, src) {
       if (Number.isInteger(s) && Number.isInteger(e)) ranges.push({ s, e, id });
     }
   }
+  if (msg.emoteRanges) ranges.push(...msg.emoteRanges);
   ranges.sort((a, b) => a.s - b.s);
 
   const pieces = [];
@@ -112,7 +113,7 @@ function renderText(msg, src) {
   for (const r of ranges) {
     if (r.s < at) continue;
     if (r.s > at) pieces.push(chars.slice(at, r.s).join(''));
-    pieces.push({ name: chars.slice(r.s, r.e + 1).join(''), url: twitchEmote(r.id, '1.0'), url2: twitchEmote(r.id, '2.0'), url4: twitchEmote(r.id, '3.0'), provider: 'Twitch' });
+    pieces.push(r.emote || { name: chars.slice(r.s, r.e + 1).join(''), url: twitchEmote(r.id, '1.0'), url2: twitchEmote(r.id, '2.0'), url4: twitchEmote(r.id, '3.0'), provider: 'Twitch' });
     at = r.e + 1;
   }
   if (at < chars.length) pieces.push(chars.slice(at).join(''));
@@ -140,7 +141,9 @@ function renderText(msg, src) {
       if (!word) continue;
       if (/^\s+$/.test(word)) { space += word; continue; }
 
-      const emote = (msg.local && userEmotes.get(word)) || src.emotes.get(word) || globalEmotes.get(word);
+      const emote = (msg.local && userEmotes.get(word))
+        || (msg.platform === 'kick' && src.kick?.emotes.get(word))
+        || src.emotes.get(word) || globalEmotes.get(word);
       if (emote) { putEmote(emote); continue; }
 
       flush();
@@ -155,6 +158,7 @@ function renderText(msg, src) {
         const login = name.toLowerCase();
         const tag = el('span', 'mention-tag', '@' + name);
         tag.dataset.login = login;
+        if (msg.platform) tag.dataset.platform = msg.platform;
         if (src.colors.has(login)) tag.style.color = userColor(login, src.colors.get(login));
         frag.append(tag, rest);
       } else {
@@ -248,10 +252,15 @@ function renderMessage(msg, ch, withTools = false) {
   }
   if (settings.collapseLong && msg.text.length > 350) row.classList.add('long');
 
-  if (withTools && auth && (msg.kind === 'chat' || msg.kind === 'whisper')) {
+  if (withTools && auth && !msg.platform && (msg.kind === 'chat' || msg.kind === 'whisper')) {
     const reply = iconButton('reply', 'Reply');
     reply.className = 'reply-btn';
     row.prepend(reply);
+  }
+
+  const home = msg.origin || ch;
+  if (settings.platformMarks && (msg.platform || home.kick)) {
+    row.append(platformMark(msg.platform || 'twitch'));
   }
 
   if (msg.system) {
@@ -270,13 +279,18 @@ function renderMessage(msg, ch, withTools = false) {
 
   if (msg.source) row.append(sourceTag(msg.source));
 
-  if (withTools && settings.modButtons && (msg.origin || ch).isMod && auth && msg.kind === 'chat' && msg.login !== (msg.origin || ch).name && msg.login !== auth.login) {
+  if (withTools && settings.modButtons && !msg.platform && (msg.origin || ch).isMod && auth && msg.kind === 'chat' && msg.login !== (msg.origin || ch).name && msg.login !== auth.login) {
     const tools = el('span', 'tools');
     tools.append(iconButton('delete', 'Delete message'), iconButton('timeout', 'Timeout 10 minutes'), iconButton('ban', 'Ban'));
     row.append(tools);
   }
 
-  if (settings.badges) {
+  if (settings.badges && msg.kickBadges) {
+    for (const b of msg.kickBadges) {
+      const node = kickBadgeEl(b, home);
+      if (node) row.append(node);
+    }
+  } else if (settings.badges) {
     for (const b of msg.badges.split(',').filter(Boolean)) {
       const info = src.badges.get(b) || globalBadges.get(b);
       if (!info) continue;
@@ -294,6 +308,7 @@ function renderMessage(msg, ch, withTools = false) {
   const name = el('span', 'user', displayName(msg));
   name.style.color = color;
   name.dataset.login = msg.login;
+  if (msg.platform) name.dataset.platform = msg.platform;
   row.append(name);
 
   if (msg.kind === 'whisper') {
