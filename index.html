@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <header class="topbar">
@@ -77,6 +77,15 @@
     <label class="check"><input type="checkbox" name="liveSound"> Play a sound when a channel goes live</label>
     <label class="check"><input type="checkbox" name="flashTitle"> Show unread mentions in the page title</label>
 
+    <h3>StreamElements alerts</h3>
+    <label class="field">StreamElements token
+      <span class="hint">Shows follows, subs, tips and the rest as highlighted lines in chat. On StreamElements, go to your account page, then Channels, and click Show secrets. Paste the Overlay token (your JWT token works too). It's only saved in this browser, so paste it into the OBS dock's settings as well.</span>
+      <input name="seToken" type="password" autocomplete="off" spellcheck="false">
+    </label>
+    <label class="field">Show alerts in <span class="hint">The Twitch channel they go to. Leave empty to use your own.</span><input name="seChannel" placeholder="your channel"></label>
+    <label class="check"><input type="checkbox" name="seTwitchDupes"> Also show Twitch subs, raids, cheers and redemptions (Twitch chat already shows these)</label>
+    <label class="check"><input type="checkbox" name="alertSound"> Play a sound for alerts</label>
+
     <h3>Use as an OBS dock</h3>
     <p class="hint">In OBS, open Docks, then Custom Browser Docks, and paste this address. Add &amp;kick=yourkickname to merge in your Kick chat, &amp;order=top to make chat move top-down in that dock only, &amp;readonly to hide the message box, or &amp;transparent for a see-through background in a browser source.</p>
     <input id="dock-url" readonly>
@@ -85,11 +94,12 @@
   </form>
 </dialog>
 
-<script src="js/util.js?v=4"></script>
-<script src="js/data.js?v=4"></script>
-<script src="js/kick.js?v=4"></script>
-<script src="js/render.js?v=4"></script>
-<script src="js/split.js?v=4"></script>
-<script src="js/ui.js?v=4"></script>
+<script src="js/util.js?v=5"></script>
+<script src="js/data.js?v=5"></script>
+<script src="js/kick.js?v=5"></script>
+<script src="js/se.js?v=5"></script>
+<script src="js/render.js?v=5"></script>
+<script src="js/split.js?v=5"></script>
+<script src="js/ui.js?v=5"></script>
 </body>
 </html>

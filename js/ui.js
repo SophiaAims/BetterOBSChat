@@ -467,9 +467,11 @@ dialog.addEventListener('close', () => {
     else settings[key] = field.value;
   }
   settings.limit = Math.min(2000, Math.max(100, settings.limit));
+  settings.seToken = settings.seToken.trim();
   saveSettings();
   applyAppearance();
   rerenderAll();
+  seSync();
 });
 
 function applyAppearance() {
@@ -550,6 +552,7 @@ async function init() {
       broadcast('Some features (whispers, AutoMod, emote picker and more) need newer permissions. Log out and back in from settings to turn them on.');
     }
   }
+  seSync();
   setInterval(pollLive, 60 * 1000);
   setInterval(validate, 60 * 60 * 1000);
 }

@@ -214,6 +214,18 @@ function renderMessage(msg, ch, withTools = false) {
     return row;
   }
 
+  if (msg.kind === 'alert') {
+    row.classList.add('alert');
+    if (settings.platformMarks && (msg.platform || (msg.origin || ch).kick)) row.append(platformMark(msg.platform || 'twitch'));
+    row.append(el('span', 'sys', msg.system));
+    if (msg.text) {
+      const body = el('span', 'body');
+      body.append(renderText(msg, msg.origin || ch));
+      row.append(el('br'), body);
+    }
+    return row;
+  }
+
   if (msg.kind === 'automod') {
     row.classList.add('automod');
     row.append(el('span', 'sys', `AutoMod held a message from ${msg.name} (${msg.reason})`), el('br'));

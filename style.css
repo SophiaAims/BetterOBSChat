@@ -107,6 +107,8 @@ body.alt-rows .messages .msg:nth-child(even) { background-color: rgba(255, 255, 
 .msg.redemption .sys { color: #8fd6f5; }
 .msg.highlighted-msg { background: rgba(117, 94, 188, .3); box-shadow: inset 3px 0 #9b7bff; }
 .msg.whisper { background: rgba(232, 112, 172, .08); box-shadow: inset 3px 0 #e870ac; }
+.msg.alert { background: rgba(255, 174, 139, .14); box-shadow: inset 3px 0 #ffae8b; }
+.msg.alert .sys { color: #ffc7a8; }
 .msg.automod { background: rgba(242, 97, 107, .08); box-shadow: inset 3px 0 var(--danger); }
 .msg.automod .sys { color: #ffb3b8; }
 .am-actions { display: inline-flex; gap: 4px; margin-left: 8px; }
